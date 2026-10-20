@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>石巻 タイドグラフ</title>
+  <title>石巻 タイドグラフ EQ風</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -28,73 +28,76 @@
       align-items: center;
       padding: 0 4px;
     }
-    .header-left {
-      display: flex;
-      flex-direction: column;
-    }
-    .location {
-      font-size: 22px;
-      font-weight: 700;
-      color: #fff;
-    }
-    .date {
-      font-size: 13px;
-      color: #7a92b5;
-    }
-    .header-right {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
+    .header-left { display: flex; flex-direction: column; }
+    .location { font-size: 22px; font-weight: 700; color: #fff; }
+    .date { font-size: 13px; color: #7a92b5; }
+    .header-right { display: flex; align-items: center; gap: 12px; }
     .reload-btn {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
+      width: 36px; height: 36px; border-radius: 50%;
       background: rgba(60, 100, 160, 0.35);
       border: 1px solid rgba(100, 140, 200, 0.4);
-      color: #a8c4e8;
-      font-size: 18px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: all 0.2s;
+      color: #a8c4e8; font-size: 18px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all 0.2s;
     }
-    .reload-btn:hover {
-      background: rgba(60, 100, 160, 0.55);
-      color: #fff;
-    }
-    .reload-btn:active {
-      transform: scale(0.92);
-    }
-    .reload-btn.spinning {
-      animation: spin 0.8s linear;
-    }
-    @keyframes spin {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
+    .reload-btn:hover { background: rgba(60, 100, 160, 0.55); color: #fff; }
+    .reload-btn.spinning { animation: spin 0.8s linear; }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
     .graph-card {
       background: rgba(15, 30, 55, 0.75);
       border-radius: 16px;
-      padding: 14px 10px 12px;
+      padding: 14px 10px 16px;
       border: 1px solid rgba(60, 90, 140, 0.3);
     }
     .graph-title {
-      font-size: 14px;
-      color: #a8c4e8;
-      margin-bottom: 6px;
-      padding-left: 6px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
+      font-size: 14px; color: #a8c4e8; margin-bottom: 10px;
+      padding-left: 6px; display: flex; align-items: center; gap: 6px;
     }
-    .graph-container {
+    .eq-container {
       width: 100%;
-      height: 320px;
+      height: 280px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      padding: 0 8px 30px;
       position: relative;
+      background: linear-gradient(to top, rgba(20,40,70,0.4) 0%, transparent 100%);
+      border-radius: 8px;
     }
-    svg { width: 100%; height: 100%; display: block; }
+    .eq-bar {
+      flex: 1;
+      margin: 0 1.5px;
+      border-radius: 4px 4px 2px 2px;
+      background: linear-gradient(to top, #1e40af, #3b82f6, #60a5fa);
+      transition: height 0.4s ease;
+      position: relative;
+      min-width: 6px;
+      box-shadow: 0 0 8px rgba(59, 130, 246, 0.3);
+    }
+    .eq-bar.current {
+      background: linear-gradient(to top, #b91c1c, #ef4444, #f87171);
+      box-shadow: 0 0 12px rgba(239, 68, 68, 0.6);
+    }
+    .eq-bar.high {
+      background: linear-gradient(to top, #1e3a8a, #2563eb, #93c5fd);
+    }
+    .marker {
+      position: absolute;
+      font-size: 11px;
+      color: #c5d8f0;
+      text-align: center;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+    .marker .time {
+      font-weight: 700;
+      color: #fff;
+      font-size: 12px;
+    }
+    .marker.high { color: #93c5fd; }
+    .marker.low { color: #94a3b8; }
+
     .bottom-bar {
       background: rgba(15, 30, 55, 0.85);
       border-radius: 14px;
@@ -104,29 +107,15 @@
       align-items: center;
       border: 1px solid rgba(60, 90, 140, 0.25);
     }
-    .info-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
+    .info-item { display: flex; align-items: center; gap: 8px; }
     .info-label { font-size: 11px; color: #7a92b5; }
     .info-value { font-size: 17px; font-weight: 700; color: #e8f0fa; }
-    .divider {
-      width: 1px;
-      height: 30px;
-      background: rgba(100, 130, 180, 0.3);
-    }
-    .note {
-      font-size: 11px;
-      color: #5a7399;
-      text-align: center;
-      padding: 4px;
-    }
+    .divider { width: 1px; height: 30px; background: rgba(100, 130, 180, 0.3); }
+    .note { font-size: 11px; color: #5a7399; text-align: center; padding: 4px; }
   </style>
 </head>
 <body>
   <div class="container">
-    <!-- ヘッダー -->
     <div class="header">
       <div class="header-left">
         <div class="location">石巻</div>
@@ -138,95 +127,14 @@
       </div>
     </div>
 
-    <!-- タイドグラフ -->
     <div class="graph-card">
-      <div class="graph-title">🌊 タイドグラフ（石巻）</div>
-      <div class="graph-container">
-        <svg viewBox="0 0 400 310" preserveAspectRatio="xMidYMid meet" id="tide-svg">
-          <defs>
-            <linearGradient id="waveFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.45"/>
-              <stop offset="100%" stop-color="#1e3a5f" stop-opacity="0.1"/>
-            </linearGradient>
-            <linearGradient id="mazume" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#c9a227" stop-opacity="0.18"/>
-              <stop offset="100%" stop-color="#c9a227" stop-opacity="0.05"/>
-            </linearGradient>
-          </defs>
-
-          <!-- マズメ帯 -->
-          <rect x="55" y="30" width="50" height="240" fill="url(#mazume)"/>
-          <rect x="285" y="30" width="50" height="240" fill="url(#mazume)"/>
-
-          <!-- グリッド -->
-          <g stroke="#2a4060" stroke-width="1" stroke-dasharray="3,4">
-            <line x1="40" y1="50" x2="380" y2="50"/>
-            <line x1="40" y1="100" x2="380" y2="100"/>
-            <line x1="40" y1="150" x2="380" y2="150"/>
-            <line x1="40" y1="200" x2="380" y2="200"/>
-            <line x1="40" y1="250" x2="380" y2="250"/>
-          </g>
-
-          <!-- Y軸 -->
-          <g fill="#6b85a8" font-size="11" text-anchor="end">
-            <text x="36" y="54">150</text>
-            <text x="36" y="104">120</text>
-            <text x="36" y="154">90</text>
-            <text x="36" y="204">60</text>
-            <text x="36" y="254">30</text>
-            <text x="36" y="294">0</text>
-          </g>
-          <text x="18" y="28" fill="#6b85a8" font-size="11">cm</text>
-
-          <!-- 潮位曲線 -->
-          <path id="tide-path"
-                d="M 40 240
-                   C 70 238, 90 235, 104 234
-                   S 140 190, 170 145
-                   S 200 110, 228 100
-                   S 255 110, 280 125
-                   S 300 132, 300 132
-                   S 320 128, 344 126
-                   S 365 124, 380 122"
-                fill="url(#waveFill)"
-                stroke="#60a5fa"
-                stroke-width="2.5"
-                stroke-linecap="round"/>
-
-          <!-- 現在時刻ライン -->
-          <g id="current-group">
-            <line id="current-line" x1="238" y1="30" x2="238" y2="280"
-                  stroke="#ef4444" stroke-width="1.5" stroke-dasharray="5,4"/>
-            <rect id="current-rect" x="208" y="105" width="60" height="20" rx="4" fill="#ef4444"/>
-            <text id="current-text" x="238" y="119" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">現在</text>
-            <polygon id="current-arrow" points="238,127 233,135 243,135" fill="#ef4444"/>
-          </g>
-
-          <!-- 干潮 04:31 -->
-          <polygon points="104,241 99,231 109,231" fill="#94a3b8"/>
-          <text x="104" y="258" text-anchor="middle" fill="#c5d8f0" font-size="11">干潮</text>
-          <text x="104" y="272" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">04:31</text>
-
-          <!-- 満潮 13:16 -->
-          <polygon points="228,93 223,103 233,103" fill="#60a5fa"/>
-          <text x="228" y="83" text-anchor="middle" fill="#c5d8f0" font-size="11">満潮</text>
-          <text x="228" y="71" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">13:16</text>
-
-          <!-- 干潮 18:19 -->
-          <polygon points="300,139 295,129 305,129" fill="#94a3b8"/>
-          <text x="300" y="156" text-anchor="middle" fill="#c5d8f0" font-size="11">干潮</text>
-          <text x="300" y="170" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">18:19</text>
-
-          <!-- 満潮 21:27 -->
-          <polygon points="344,119 339,129 349,129" fill="#60a5fa"/>
-          <text x="344" y="109" text-anchor="middle" fill="#c5d8f0" font-size="11">満潮</text>
-          <text x="344" y="97" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">21:27</text>
-        </svg>
+      <div class="graph-title">🎚 タイドグラフ EQ風（石巻）</div>
+      <div class="eq-container" id="eq-container">
+        <!-- バーはJSで生成 -->
       </div>
     </div>
 
-    <!-- 下部：気温・風 -->
-    <div class="bottom-bar" id="weather-bar">
+    <div class="bottom-bar">
       <div class="info-item">
         <div style="font-size:18px">🌡️</div>
         <div>
@@ -245,15 +153,100 @@
     </div>
 
     <div class="note">
-      潮位：気象庁予測（石巻・本日）　天気：Open-Meteo実況<br>
-      ↻ボタンで最新の気温・風・現在時刻を再取得できます
+      潮位をグラフィックイコライザー風に表示　天気：Open-Meteo実況<br>
+      赤いバーが現在時刻　↻で最新情報を再取得
     </div>
   </div>
 
   <script>
-    function timeToX(hour, minute = 0) {
-      const h = hour + minute / 60;
-      return 40 + (h / 24) * 340;
+    // 今日の潮位予測ポイント（石巻 2026/10/20）
+    // 時間(h) : 潮位(cm)
+    const tidePoints = [
+      { h: 0,   cm: 80 },
+      { h: 4.5, cm: 54 },   // 干潮 04:31
+      { h: 8,   cm: 80 },
+      { h: 13.27, cm: 119 }, // 満潮 13:16
+      { h: 16,  cm: 110 },
+      { h: 18.32, cm: 106 }, // 干潮 18:19
+      { h: 20,  cm: 108 },
+      { h: 21.45, cm: 109 }, // 満潮 21:27
+      { h: 24,  cm: 95 }
+    ];
+
+    // 任意の時間の潮位を線形補間
+    function getTideAt(hour) {
+      for (let i = 0; i < tidePoints.length - 1; i++) {
+        const a = tidePoints[i];
+        const b = tidePoints[i + 1];
+        if (hour >= a.h && hour <= b.h) {
+          const t = (hour - a.h) / (b.h - a.h);
+          return a.cm + (b.cm - a.cm) * t;
+        }
+      }
+      return 80;
+    }
+
+    function createEQ() {
+      const container = document.getElementById('eq-container');
+      container.innerHTML = '';
+
+      const barCount = 36; // バーの本数（多いほど滑らか）
+      const maxHeight = 220; // px
+      const maxCm = 150;
+
+      const now = new Date();
+      const currentH = now.getHours() + now.getMinutes() / 60;
+
+      for (let i = 0; i < barCount; i++) {
+        const hour = (i / (barCount - 1)) * 24;
+        const cm = getTideAt(hour);
+        const height = Math.max(8, (cm / maxCm) * maxHeight);
+
+        const bar = document.createElement('div');
+        bar.className = 'eq-bar';
+        bar.style.height = height + 'px';
+
+        // 現在時刻に近いバーを赤く
+        if (Math.abs(hour - currentH) < (24 / barCount)) {
+          bar.classList.add('current');
+        }
+        // 満潮付近を少し明るく
+        if (Math.abs(hour - 13.27) < 0.8 || Math.abs(hour - 21.45) < 0.8) {
+          bar.classList.add('high');
+        }
+
+        container.appendChild(bar);
+      }
+
+      // マーカー追加
+      addMarker(container, 4.52, '干潮', '04:31', 'low');
+      addMarker(container, 13.27, '満潮', '13:16', 'high');
+      addMarker(container, 18.32, '干潮', '18:19', 'low');
+      addMarker(container, 21.45, '満潮', '21:27', 'high');
+    }
+
+    function addMarker(container, hour, label, time, type) {
+      const left = (hour / 24) * 100;
+      const div = document.createElement('div');
+      div.className = `marker ${type}`;
+      div.style.left = `calc(${left}% - 20px)`;
+      div.style.bottom = '2px';
+      div.innerHTML = `<div>${label}</div><div class="time">${time}</div>`;
+      container.appendChild(div);
+    }
+
+    function updateTimeDisplay() {
+      const now = new Date();
+      const h = String(now.getHours()).padStart(2, '0');
+      const m = String(now.getMinutes()).padStart(2, '0');
+      document.getElementById('now-time').textContent = h + ':' + m;
+    }
+
+    function updateDate() {
+      const now = new Date();
+      const week = ['日','月','火','水','木','金','土'];
+      document.getElementById('date-label').textContent =
+        `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日（${week[now.getDay()]}）・長潮`;
     }
 
     function degToDir(deg) {
@@ -262,76 +255,42 @@
       return dirs[Math.round(deg / 22.5) % 16];
     }
 
-    function updateCurrentLine() {
-      const now = new Date();
-      const h = now.getHours();
-      const m = now.getMinutes();
-      const x = timeToX(h, m);
-
-      document.getElementById('current-line').setAttribute('x1', x);
-      document.getElementById('current-line').setAttribute('x2', x);
-      document.getElementById('current-rect').setAttribute('x', x - 30);
-      document.getElementById('current-text').setAttribute('x', x);
-      document.getElementById('current-arrow').setAttribute('points', `${x},127 ${x-5},135 ${x+5},135`);
-
-      document.getElementById('now-time').textContent =
-        String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
-    }
-
-    function updateDate() {
-      const now = new Date();
-      const week = ['日','月','火','水','木','金','土'];
-      const y = now.getFullYear();
-      const mo = now.getMonth() + 1;
-      const d = now.getDate();
-      const w = week[now.getDay()];
-      document.getElementById('date-label').textContent = `${y}年${mo}月${d}日（${w}）・長潮`;
-    }
-
     async function fetchWeather() {
       try {
         const url = 'https://api.open-meteo.com/v1/forecast?latitude=38.43&longitude=141.30&current=temperature_2m,wind_speed_10m,wind_direction_10m&timezone=Asia%2FTokyo&wind_speed_unit=ms';
         const res = await fetch(url);
         const data = await res.json();
         const cur = data.current;
-
-        const temp = Math.round(cur.temperature_2m * 10) / 10;
-        const windSpeed = Math.round(cur.wind_speed_10m * 10) / 10;
-        const windDir = degToDir(cur.wind_direction_10m);
-
-        document.getElementById('temp-value').textContent = temp + '°C';
-        document.getElementById('wind-value').textContent = `${windDir} ${windSpeed} m/s`;
+        document.getElementById('temp-value').textContent = (Math.round(cur.temperature_2m*10)/10) + '°C';
+        document.getElementById('wind-value').textContent =
+          `${degToDir(cur.wind_direction_10m)} ${Math.round(cur.wind_speed_10m*10)/10} m/s`;
       } catch (e) {
         document.getElementById('temp-value').textContent = '--°C';
         document.getElementById('wind-value').textContent = '取得失敗';
-        console.error(e);
       }
     }
 
-    // リロード処理
     async function reloadData() {
       const btn = document.getElementById('reload-btn');
       btn.classList.add('spinning');
-      
       updateDate();
-      updateCurrentLine();
+      updateTimeDisplay();
+      createEQ();
       await fetchWeather();
-
-      setTimeout(() => {
-        btn.classList.remove('spinning');
-      }, 800);
+      setTimeout(() => btn.classList.remove('spinning'), 800);
     }
 
     // 初期化
     updateDate();
-    updateCurrentLine();
+    updateTimeDisplay();
+    createEQ();
     fetchWeather();
 
-    // リロードボタン
     document.getElementById('reload-btn').addEventListener('click', reloadData);
-
-    // 1分ごとに現在時刻を更新
-    setInterval(updateCurrentLine, 60000);
+    setInterval(() => {
+      updateTimeDisplay();
+      createEQ(); // 現在位置のバーを更新
+    }, 60000);
   </script>
 </body>
 </html>
