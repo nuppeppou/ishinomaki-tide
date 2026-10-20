@@ -55,6 +55,7 @@
     .graph-container {
       width: 100%;
       height: 320px;
+      position: relative;
     }
     svg { width: 100%; height: 100%; display: block; }
     .bottom-bar {
@@ -84,6 +85,9 @@
       text-align: center;
       padding: 4px;
     }
+    .loading {
+      opacity: 0.5;
+    }
   </style>
 </head>
 <body>
@@ -92,16 +96,16 @@
     <div class="header">
       <div>
         <div class="location">石巻</div>
-        <div class="date">2026年10月20日（火）・長潮</div>
+        <div class="date" id="date-label">読み込み中...</div>
       </div>
-      <div class="date" id="now-time"></div>
+      <div class="date" id="now-time">--:--</div>
     </div>
 
     <!-- タイドグラフ -->
     <div class="graph-card">
       <div class="graph-title">🌊 タイドグラフ（石巻）</div>
       <div class="graph-container">
-        <svg viewBox="0 0 400 310" preserveAspectRatio="xMidYMid meet">
+        <svg viewBox="0 0 400 310" preserveAspectRatio="xMidYMid meet" id="tide-svg">
           <defs>
             <linearGradient id="waveFill" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.45"/>
@@ -113,7 +117,7 @@
             </linearGradient>
           </defs>
 
-          <!-- マズメ帯（簡易） -->
+          <!-- マズメ帯 -->
           <rect x="55" y="30" width="50" height="240" fill="url(#mazume)"/>
           <rect x="285" y="30" width="50" height="240" fill="url(#mazume)"/>
 
@@ -126,7 +130,7 @@
             <line x1="40" y1="250" x2="380" y2="250"/>
           </g>
 
-          <!-- Y軸ラベル -->
+          <!-- Y軸 -->
           <g fill="#6b85a8" font-size="11" text-anchor="end">
             <text x="36" y="54">150</text>
             <text x="36" y="104">120</text>
@@ -137,18 +141,9 @@
           </g>
           <text x="18" y="28" fill="#6b85a8" font-size="11">cm</text>
 
-          <!-- 
-            スケール: x=40(0時) ～ x=380(24時)  → 1時間 = 14.1667px
-            干潮 04:31 → x=104
-            満潮 13:16 → x=228
-            干潮 18:19 → x=300
-            満潮 21:27 → x=344
-            現在 ≈13:57 → x=238
-            Y: 0cm=y290 / 150cm=y50
-          -->
-
-          <!-- 潮位曲線 -->
-          <path d="M 40 240
+          <!-- 潮位曲線（今日の予測） -->
+          <path id="tide-path"
+                d="M 40 240
                    C 70 238, 90 235, 104 234
                    S 140 190, 170 145
                    S 200 110, 228 100
@@ -161,29 +156,31 @@
                 stroke-width="2.5"
                 stroke-linecap="round"/>
 
-          <!-- 現在時刻ライン -->
-          <line x1="238" y1="30" x2="238" y2="280"
-                stroke="#ef4444" stroke-width="1.5" stroke-dasharray="5,4"/>
-          <rect x="208" y="105" width="60" height="20" rx="4" fill="#ef4444"/>
-          <text x="238" y="119" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">現在</text>
-          <polygon points="238,127 233,135 243,135" fill="#ef4444"/>
+          <!-- 現在時刻ライン（JSで位置更新） -->
+          <g id="current-group">
+            <line id="current-line" x1="238" y1="30" x2="238" y2="280"
+                  stroke="#ef4444" stroke-width="1.5" stroke-dasharray="5,4"/>
+            <rect id="current-rect" x="208" y="105" width="60" height="20" rx="4" fill="#ef4444"/>
+            <text id="current-text" x="238" y="119" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">現在</text>
+            <polygon id="current-arrow" points="238,127 233,135 243,135" fill="#ef4444"/>
+          </g>
 
-          <!-- 干潮 04:31 (54cm) -->
+          <!-- 干潮 04:31 -->
           <polygon points="104,241 99,231 109,231" fill="#94a3b8"/>
           <text x="104" y="258" text-anchor="middle" fill="#c5d8f0" font-size="11">干潮</text>
           <text x="104" y="272" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">04:31</text>
 
-          <!-- 満潮 13:16 (119cm) -->
+          <!-- 満潮 13:16 -->
           <polygon points="228,93 223,103 233,103" fill="#60a5fa"/>
           <text x="228" y="83" text-anchor="middle" fill="#c5d8f0" font-size="11">満潮</text>
           <text x="228" y="71" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">13:16</text>
 
-          <!-- 干潮 18:19 (106cm) -->
+          <!-- 干潮 18:19 -->
           <polygon points="300,139 295,129 305,129" fill="#94a3b8"/>
           <text x="300" y="156" text-anchor="middle" fill="#c5d8f0" font-size="11">干潮</text>
           <text x="300" y="170" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">18:19</text>
 
-          <!-- 満潮 21:27 (109cm) -->
+          <!-- 満潮 21:27 -->
           <polygon points="344,119 339,129 349,129" fill="#60a5fa"/>
           <text x="344" y="109" text-anchor="middle" fill="#c5d8f0" font-size="11">満潮</text>
           <text x="344" y="97" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">21:27</text>
@@ -191,13 +188,13 @@
       </div>
     </div>
 
-    <!-- 下部：気温・風 -->
-    <div class="bottom-bar">
+    <!-- 下部：気温・風（APIから更新） -->
+    <div class="bottom-bar" id="weather-bar">
       <div class="info-item">
         <div style="font-size:18px">🌡️</div>
         <div>
           <div class="info-label">気温</div>
-          <div class="info-value">18°C</div>
+          <div class="info-value" id="temp-value">--°C</div>
         </div>
       </div>
       <div class="divider"></div>
@@ -205,26 +202,88 @@
         <div style="font-size:18px">↗️</div>
         <div>
           <div class="info-label">風向・風速</div>
-          <div class="info-value">北北東 2 m/s</div>
+          <div class="info-value" id="wind-value">--</div>
         </div>
       </div>
     </div>
 
     <div class="note">
-      潮位：気象庁予測（石巻）　気温・風：アメダス石巻付近の実況目安<br>
-      ※実測潮位は気象条件により異なる場合があります
+      潮位：気象庁予測（石巻・本日）　天気：Open-Meteo実況<br>
+      ページを開くたびに最新の気温・風・現在時刻を取得します
     </div>
   </div>
 
   <script>
-    function updateTime() {
-      const now = new Date();
-      const h = String(now.getHours()).padStart(2, '0');
-      const m = String(now.getMinutes()).padStart(2, '0');
-      document.getElementById('now-time').textContent = h + ':' + m;
+    // 時間 → x座標変換（0時=40, 24時=380）
+    function timeToX(hour, minute = 0) {
+      const h = hour + minute / 60;
+      return 40 + (h / 24) * 340;
     }
-    updateTime();
-    setInterval(updateTime, 30000);
+
+    // 風向（度）→ 日本語16方位
+    function degToDir(deg) {
+      const dirs = ["北","北北東","北東","東北東","東","東南東","南東","南南東",
+                    "南","南南西","南西","西南西","西","西北西","北西","北北西"];
+      return dirs[Math.round(deg / 22.5) % 16];
+    }
+
+    // 現在時刻ラインを更新
+    function updateCurrentLine() {
+      const now = new Date();
+      const h = now.getHours();
+      const m = now.getMinutes();
+      const x = timeToX(h, m);
+
+      document.getElementById('current-line').setAttribute('x1', x);
+      document.getElementById('current-line').setAttribute('x2', x);
+      document.getElementById('current-rect').setAttribute('x', x - 30);
+      document.getElementById('current-text').setAttribute('x', x);
+      document.getElementById('current-arrow').setAttribute('points', `${x},127 ${x-5},135 ${x+5},135`);
+
+      // ヘッダー時刻
+      document.getElementById('now-time').textContent =
+        String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
+    }
+
+    // 日付表示
+    function updateDate() {
+      const now = new Date();
+      const week = ['日','月','火','水','木','金','土'];
+      const y = now.getFullYear();
+      const mo = now.getMonth() + 1;
+      const d = now.getDate();
+      const w = week[now.getDay()];
+      document.getElementById('date-label').textContent = `${y}年${mo}月${d}日（${w}）・長潮`;
+    }
+
+    // 天気を取得（Open-Meteo）
+    async function fetchWeather() {
+      try {
+        const url = 'https://api.open-meteo.com/v1/forecast?latitude=38.43&longitude=141.30&current=temperature_2m,wind_speed_10m,wind_direction_10m&timezone=Asia%2FTokyo&wind_speed_unit=ms';
+        const res = await fetch(url);
+        const data = await res.json();
+        const cur = data.current;
+
+        const temp = Math.round(cur.temperature_2m * 10) / 10;
+        const windSpeed = Math.round(cur.wind_speed_10m * 10) / 10;
+        const windDir = degToDir(cur.wind_direction_10m);
+
+        document.getElementById('temp-value').textContent = temp + '°C';
+        document.getElementById('wind-value').textContent = `${windDir} ${windSpeed} m/s`;
+      } catch (e) {
+        document.getElementById('temp-value').textContent = '--°C';
+        document.getElementById('wind-value').textContent = '取得失敗';
+        console.error(e);
+      }
+    }
+
+    // 初期化
+    updateDate();
+    updateCurrentLine();
+    fetchWeather();
+
+    // 1分ごとに現在時刻ラインを更新
+    setInterval(updateCurrentLine, 60000);
   </script>
 </body>
 </html>
