@@ -40,7 +40,7 @@
     .graph-card {
       background: rgba(15, 30, 55, 0.75);
       border-radius: 16px;
-      padding: 14px 10px 8px;
+      padding: 14px 10px 12px;
       border: 1px solid rgba(60, 90, 140, 0.3);
     }
     .graph-title {
@@ -54,7 +54,7 @@
     }
     .graph-container {
       width: 100%;
-      height: 340px;
+      height: 320px;
     }
     svg { width: 100%; height: 100%; display: block; }
     .bottom-bar {
@@ -101,7 +101,7 @@
     <div class="graph-card">
       <div class="graph-title">🌊 タイドグラフ（石巻）</div>
       <div class="graph-container">
-        <svg viewBox="0 0 400 340" preserveAspectRatio="xMidYMid meet">
+        <svg viewBox="0 0 400 310" preserveAspectRatio="xMidYMid meet">
           <defs>
             <linearGradient id="waveFill" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.45"/>
@@ -113,93 +113,80 @@
             </linearGradient>
           </defs>
 
-          <!-- マズメ帯（朝・夕 簡易） -->
-          <rect x="55" y="40" width="50" height="240" fill="url(#mazume)"/>
-          <rect x="285" y="40" width="50" height="240" fill="url(#mazume)"/>
+          <!-- マズメ帯（簡易） -->
+          <rect x="55" y="30" width="50" height="240" fill="url(#mazume)"/>
+          <rect x="285" y="30" width="50" height="240" fill="url(#mazume)"/>
 
           <!-- グリッド -->
           <g stroke="#2a4060" stroke-width="1" stroke-dasharray="3,4">
-            <line x1="40" y1="60" x2="380" y2="60"/>
-            <line x1="40" y1="110" x2="380" y2="110"/>
-            <line x1="40" y1="160" x2="380" y2="160"/>
-            <line x1="40" y1="210" x2="380" y2="210"/>
-            <line x1="40" y1="260" x2="380" y2="260"/>
+            <line x1="40" y1="50" x2="380" y2="50"/>
+            <line x1="40" y1="100" x2="380" y2="100"/>
+            <line x1="40" y1="150" x2="380" y2="150"/>
+            <line x1="40" y1="200" x2="380" y2="200"/>
+            <line x1="40" y1="250" x2="380" y2="250"/>
           </g>
 
           <!-- Y軸ラベル -->
           <g fill="#6b85a8" font-size="11" text-anchor="end">
-            <text x="36" y="64">150</text>
-            <text x="36" y="114">120</text>
-            <text x="36" y="164">90</text>
-            <text x="36" y="214">60</text>
-            <text x="36" y="264">30</text>
-            <text x="36" y="304">0</text>
+            <text x="36" y="54">150</text>
+            <text x="36" y="104">120</text>
+            <text x="36" y="154">90</text>
+            <text x="36" y="204">60</text>
+            <text x="36" y="254">30</text>
+            <text x="36" y="294">0</text>
           </g>
-          <text x="18" y="30" fill="#6b85a8" font-size="11">cm</text>
+          <text x="18" y="28" fill="#6b85a8" font-size="11">cm</text>
 
           <!-- 
-            時間スケール: x=40 (0時) ～ x=380 (24時)
-            1時間 = 14.1667px
-            干潮 04:31 → x≈104
-            満潮 13:16 → x≈228
-            干潮 18:19 → x≈300
-            満潮 21:27 → x≈344
-            現在 13:50頃 → x≈236
+            スケール: x=40(0時) ～ x=380(24時)  → 1時間 = 14.1667px
+            干潮 04:31 → x=104
+            満潮 13:16 → x=228
+            干潮 18:19 → x=300
+            満潮 21:27 → x=344
+            現在 ≈13:57 → x=238
+            Y: 0cm=y290 / 150cm=y50
           -->
 
           <!-- 潮位曲線 -->
-          <path d="M 40 250
-                   C 70 248, 90 245, 104 248
-                   S 140 200, 170 150
-                   S 200 110, 228 95
-                   S 260 110, 280 130
-                   S 300 148, 300 148
-                   S 320 145, 344 142
-                   S 365 140, 380 138"
+          <path d="M 40 240
+                   C 70 238, 90 235, 104 234
+                   S 140 190, 170 145
+                   S 200 110, 228 100
+                   S 255 110, 280 125
+                   S 300 132, 300 132
+                   S 320 128, 344 126
+                   S 365 124, 380 122"
                 fill="url(#waveFill)"
                 stroke="#60a5fa"
                 stroke-width="2.5"
                 stroke-linecap="round"/>
 
-          <!-- 現在時刻ライン（13:50頃） -->
-          <line x1="236" y1="40" x2="236" y2="290"
+          <!-- 現在時刻ライン -->
+          <line x1="238" y1="30" x2="238" y2="280"
                 stroke="#ef4444" stroke-width="1.5" stroke-dasharray="5,4"/>
-          <rect x="206" y="112" width="60" height="20" rx="4" fill="#ef4444"/>
-          <text x="236" y="126" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">現在</text>
-          <polygon points="236,134 231,142 241,142" fill="#ef4444"/>
+          <rect x="208" y="105" width="60" height="20" rx="4" fill="#ef4444"/>
+          <text x="238" y="119" text-anchor="middle" fill="#fff" font-size="11" font-weight="700">現在</text>
+          <polygon points="238,127 233,135 243,135" fill="#ef4444"/>
 
-          <!-- 干潮 04:31 -->
-          <polygon points="104,255 99,245 109,245" fill="#94a3b8"/>
-          <text x="104" y="272" text-anchor="middle" fill="#c5d8f0" font-size="11">干潮</text>
-          <text x="104" y="286" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">04:31</text>
+          <!-- 干潮 04:31 (54cm) -->
+          <polygon points="104,241 99,231 109,231" fill="#94a3b8"/>
+          <text x="104" y="258" text-anchor="middle" fill="#c5d8f0" font-size="11">干潮</text>
+          <text x="104" y="272" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">04:31</text>
 
-          <!-- 満潮 13:16 -->
-          <polygon points="228,88 223,98 233,98" fill="#60a5fa"/>
-          <text x="228" y="78" text-anchor="middle" fill="#c5d8f0" font-size="11">満潮</text>
-          <text x="228" y="66" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">13:16</text>
+          <!-- 満潮 13:16 (119cm) -->
+          <polygon points="228,93 223,103 233,103" fill="#60a5fa"/>
+          <text x="228" y="83" text-anchor="middle" fill="#c5d8f0" font-size="11">満潮</text>
+          <text x="228" y="71" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">13:16</text>
 
-          <!-- 干潮 18:19 -->
-          <polygon points="300,155 295,145 305,145" fill="#94a3b8"/>
-          <text x="300" y="172" text-anchor="middle" fill="#c5d8f0" font-size="11">干潮</text>
-          <text x="300" y="186" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">18:19</text>
+          <!-- 干潮 18:19 (106cm) -->
+          <polygon points="300,139 295,129 305,129" fill="#94a3b8"/>
+          <text x="300" y="156" text-anchor="middle" fill="#c5d8f0" font-size="11">干潮</text>
+          <text x="300" y="170" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">18:19</text>
 
-          <!-- 満潮 21:27 -->
-          <polygon points="344,135 339,145 349,145" fill="#60a5fa"/>
-          <text x="344" y="125" text-anchor="middle" fill="#c5d8f0" font-size="11">満潮</text>
-          <text x="344" y="113" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">21:27</text>
-
-          <!-- X軸時間（均等配置） -->
-          <g fill="#6b85a8" font-size="12" text-anchor="middle">
-            <text x="40"  y="320">0</text>
-            <text x="82"  y="320">3</text>
-            <text x="125" y="320">6</text>
-            <text x="167" y="320">9</text>
-            <text x="210" y="320">12</text>
-            <text x="252" y="320">15</text>
-            <text x="295" y="320">18</text>
-            <text x="337" y="320">21</text>
-            <text x="380" y="320">24</text>
-          </g>
+          <!-- 満潮 21:27 (109cm) -->
+          <polygon points="344,119 339,129 349,129" fill="#60a5fa"/>
+          <text x="344" y="109" text-anchor="middle" fill="#c5d8f0" font-size="11">満潮</text>
+          <text x="344" y="97" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">21:27</text>
         </svg>
       </div>
     </div>
