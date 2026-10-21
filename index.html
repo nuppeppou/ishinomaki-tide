@@ -56,11 +56,11 @@
     }
     .eq-container {
       width: 100%;
-      height: 280px;
+      height: 260px;
       display: flex;
       align-items: flex-end;
       justify-content: space-between;
-      padding: 0 6px 20px;
+      padding: 0 6px 16px;
       position: relative;
       background: linear-gradient(to top, rgba(20,40,70,0.4) 0%, transparent 100%);
       border-radius: 8px;
@@ -87,16 +87,23 @@
     .bottom-bar {
       background: rgba(15, 30, 55, 0.85);
       border-radius: 14px;
-      padding: 14px 18px;
+      padding: 14px 12px;
       display: flex;
       justify-content: space-around;
       align-items: center;
       border: 1px solid rgba(60, 90, 140, 0.25);
+      gap: 4px;
     }
-    .info-item { display: flex; align-items: center; gap: 8px; }
+    .info-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex: 1;
+      justify-content: center;
+    }
     .info-label { font-size: 11px; color: #7a92b5; }
-    .info-value { font-size: 17px; font-weight: 700; color: #e8f0fa; }
-    .divider { width: 1px; height: 30px; background: rgba(100, 130, 180, 0.3); }
+    .info-value { font-size: 15px; font-weight: 700; color: #e8f0fa; white-space: nowrap; }
+    .divider { width: 1px; height: 28px; background: rgba(100, 130, 180, 0.3); flex-shrink: 0; }
     .note { font-size: 11px; color: #5a7399; text-align: center; padding: 4px; line-height: 1.5; }
   </style>
 </head>
@@ -115,15 +122,13 @@
 
     <div class="graph-card">
       <div class="graph-title">🎚 タイドグラフ EQ風（ライブ近似）</div>
-      <div class="eq-container" id="eq-container">
-        <!-- バーはJSで生成 -->
-      </div>
+      <div class="eq-container" id="eq-container"></div>
       <div class="status" id="status">データ取得中...</div>
     </div>
 
     <div class="bottom-bar">
       <div class="info-item">
-        <div style="font-size:18px">🌡️</div>
+        <div style="font-size:16px">🌡️</div>
         <div>
           <div class="info-label">気温</div>
           <div class="info-value" id="temp-value">--°C</div>
@@ -131,18 +136,26 @@
       </div>
       <div class="divider"></div>
       <div class="info-item">
-        <div style="font-size:18px">↗️</div>
+        <div style="font-size:16px">🌊</div>
         <div>
-          <div class="info-label">風向・風速</div>
+          <div class="info-label">海水温</div>
+          <div class="info-value" id="sst-value">--°C</div>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div class="info-item">
+        <div style="font-size:16px">↗️</div>
+        <div>
+          <div class="info-label">風</div>
           <div class="info-value" id="wind-value">--</div>
         </div>
       </div>
     </div>
 
     <div class="note">
-      潮位：Open-Meteo Marine（海面水位・近似値）<br>
-      天気：Open-Meteo 実況　↻で最新データを再取得<br>
-      ※正確な満潮・干潮時刻は気象庁潮位表をご確認ください
+      潮位・海水温：Open-Meteo Marine（近似値）<br>
+      気温・風：Open-Meteo 実況　↻で最新データを再取得<br>
+      ※正確な満潮・干潮は気象庁潮位表を、海水温は現地観測を優先してください
     </div>
   </div>
 
@@ -173,72 +186,83 @@
         const cur = data.current;
         document.getElementById('temp-value').textContent = (Math.round(cur.temperature_2m * 10) / 10) + '°C';
         document.getElementById('wind-value').textContent =
-          `${degToDir(cur.wind_direction_10m)} ${Math.round(cur.wind_speed_10m * 10) / 10} m/s`;
+          `${degToDir(cur.wind_direction_10m)} ${Math.round(cur.wind_speed_10m * 10) / 10}`;
       } catch (e) {
         document.getElementById('temp-value').textContent = '--°C';
         document.getElementById('wind-value').textContent = '取得失敗';
       }
     }
 
-    async function fetchTideAndDraw() {
+    async function fetchMarineAndDraw() {
       const container = document.getElementById('eq-container');
       const status = document.getElementById('status');
-      status.textContent = '潮位データ取得中...';
+      status.textContent = '海洋データ取得中...';
 
       try {
-        // 過去12時間 + 未来12時間の海面水位を取得
-        const url = `https://marine-api.open-meteo.com/v1/marine?latitude=${LAT}&longitude=${LON}&hourly=sea_level_height_msl&timezone=Asia%2FTokyo&past_hours=12&forecast_hours=12`;
+        // 潮位 + 海水温を同時取得
+        const url = `https://marine-api.open-meteo.com/v1/marine?latitude=${LAT}&longitude=${LON}&hourly=sea_level_height_msl,sea_surface_temperature&timezone=Asia%2FTokyo&past_hours=12&forecast_hours=12`;
         const res = await fetch(url);
         const data = await res.json();
 
         const times = data.hourly.time;
         const levels = data.hourly.sea_level_height_msl;
+        const ssts = data.hourly.sea_surface_temperature;
 
-        // 有効なデータだけ抽出
+        // 海水温：現在に最も近い値を表示
+        const now = new Date();
+        let nearestSst = null;
+        let minDiff = Infinity;
+        for (let i = 0; i < times.length; i++) {
+          if (ssts[i] == null) continue;
+          const t = new Date(times[i]);
+          const diff = Math.abs(t - now);
+          if (diff < minDiff) {
+            minDiff = diff;
+            nearestSst = ssts[i];
+          }
+        }
+        if (nearestSst != null) {
+          document.getElementById('sst-value').textContent = (Math.round(nearestSst * 10) / 10) + '°C';
+        } else {
+          document.getElementById('sst-value').textContent = '--°C';
+        }
+
+        // 潮位バー生成
         const points = [];
         for (let i = 0; i < times.length; i++) {
-          if (levels[i] !== null && levels[i] !== undefined) {
+          if (levels[i] != null) {
             points.push({ time: times[i], level: levels[i] });
           }
         }
 
-        if (points.length === 0) throw new Error('データなし');
+        if (points.length === 0) throw new Error('潮位データなし');
 
-        // スケーリング
         const minL = Math.min(...points.map(p => p.level));
         const maxL = Math.max(...points.map(p => p.level));
-        const range = Math.max(maxL - minL, 0.3); // 最低でも0.3m幅を確保
-        const maxHeight = 220;
+        const range = Math.max(maxL - minL, 0.25);
+        const maxHeight = 200;
 
         container.innerHTML = '';
 
-        const now = new Date();
-        let currentIndex = -1;
-
-        points.forEach((p, idx) => {
+        points.forEach(p => {
           const bar = document.createElement('div');
           bar.className = 'eq-bar';
-
-          // 高さを正規化（最小を少し残す）
           const normalized = (p.level - minL) / range;
-          const height = Math.max(10, normalized * maxHeight);
-          bar.style.height = height + 'px';
+          bar.style.height = Math.max(8, normalized * maxHeight) + 'px';
 
-          // 現在時刻に最も近いバーを強調
           const t = new Date(p.time);
-          if (Math.abs(t - now) < 30 * 60 * 1000) { // 30分以内
+          if (Math.abs(t - now) < 35 * 60 * 1000) {
             bar.classList.add('current');
-            currentIndex = idx;
           }
-
           container.appendChild(bar);
         });
 
-        status.textContent = `海面水位（近似） ${points.length}本のバー　現在付近を赤表示`;
+        status.textContent = `海面水位（近似） ${points.length}本　現在付近を赤表示`;
       } catch (e) {
         console.error(e);
-        status.textContent = '潮位データの取得に失敗しました';
-        container.innerHTML = '<div style="color:#7a92b5;padding:40px;text-align:center;">データ取得失敗</div>';
+        status.textContent = '海洋データの取得に失敗しました';
+        document.getElementById('sst-value').textContent = '--°C';
+        container.innerHTML = '<div style="color:#7a92b5;padding:40px;text-align:center;width:100%">データ取得失敗</div>';
       }
     }
 
@@ -246,7 +270,7 @@
       const btn = document.getElementById('reload-btn');
       btn.classList.add('spinning');
       updateDateTime();
-      await Promise.all([fetchWeather(), fetchTideAndDraw()]);
+      await Promise.all([fetchWeather(), fetchMarineAndDraw()]);
       setTimeout(() => btn.classList.remove('spinning'), 800);
     }
 
@@ -255,8 +279,6 @@
     reloadData();
 
     document.getElementById('reload-btn').addEventListener('click', reloadData);
-
-    // 1分ごとに時刻だけ更新
     setInterval(updateDateTime, 60000);
   </script>
 </body>
